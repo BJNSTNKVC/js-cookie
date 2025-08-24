@@ -692,6 +692,17 @@ describe('Cookie.get', (): void => {
 
         expect(Cookie.get(key)).toBe(value);
     });
+
+    test('returns fallback value if key does not exist in the Cookie object', (): void => {
+        const key: string = '$key';
+        const fallback: string = 'fallback';
+
+        expect(Cookie.get(key, fallback)).toEqual(fallback);
+    });
+
+    test('returns fallback function result if key does not exist in the Cookie object', (): void => {
+        expect(Cookie.get('$key', (): string => 'fallback')).toEqual('fallback');
+    });
 });
 
 describe('Cookie.remember', (): void => {
