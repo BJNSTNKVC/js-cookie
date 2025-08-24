@@ -4,8 +4,20 @@
   "description": "Simple wrapper for JavaScript Cookie.",
   "type": "module",
   "main": "lib/main.js",
+  "source": "src/main.ts",
+  "types": "src/main.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/main.esm.js",
+      "require": "./lib/main.umd.js",
+      "default": "./lib/main.umd.js"
+    }
+  },
+  "directories": {
+    "lib": "lib"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",
@@ -19,5 +31,15 @@
   "bugs": {
     "url": "https://github.com/BJNSTNKVC/js-cookie/issues"
   },
-  "homepage": "https://github.com/BJNSTNKVC/js-cookie#readme"
+  "homepage": "https://github.com/BJNSTNKVC/js-cookie#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/node": "^20.19.6",
+    "rollup": "^4.44.1",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "terser": "^5.43.1",
+    "typescript": "^5.8.3"
+  }
 }
