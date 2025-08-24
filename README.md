@@ -15,7 +15,7 @@ npm install @bjnstnkvc/cookie
 and then import it into your project
 
 ```javascript
-import { Cookie } from '@bjnstnkvc/local-storage';
+import { Cookie } from '@bjnstnkvc/cookie';
 ```
 
 ### CDN
