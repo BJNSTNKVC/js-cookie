@@ -81,14 +81,14 @@ export class Cookie {
      *
      * @returns { * }
      */
-    static get(key: string): any {
+    static get(key: string, fallback: any = null): any {
         // Escape special regex characters in the key.
         key = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
         const cookies: RegExpMatchArray | null = new RegExp(`(^|;\\s*)${key}=([^;]*)`).exec(document.cookie);
 
         if (cookies === null) {
-            return null;
+            return fallback instanceof Function ? fallback() : fallback ?? null;
         }
 
         const cookie: string = cookies[2] as string;
@@ -122,7 +122,7 @@ export class Cookie {
     /**
      * Return all items stored in the Cookie.
      *
-     * @return { object[] }
+     * @return { {key: string, value: any}[] }
      */
     static all(): { key: string, value: any }[] {
         let cookies: { key: string, value: any }[] = [];
