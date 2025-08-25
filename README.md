@@ -84,7 +84,7 @@ Cookie.remember('key', () => 'default');
 
 ### all
 
-Retrieve an object containing all keys and their associated values stored in the Cookie object.
+Retrieve an array containing all keys and their associated values stored in the Cookie object.
 
 #### Example
 
