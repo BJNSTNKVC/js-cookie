@@ -111,6 +111,9 @@ export class Cookie {
     /**
      * Get the key from the Cookie.
      *
+     * In case the key does not exist and the fallback is an asynchronous function,
+     * the Promise returned by the fallback is returned.
+     *
      * @param { string } key
      * @param { * } fallback
      *
@@ -144,6 +147,10 @@ export class Cookie {
     /**
      * Get the key from the Cookie, or execute the given callback and store the result.
      *
+     * In case the key does not exist and the callback is an asynchronous function,
+     * the key is set once its result resolves and a Promise resolving with the
+     * written cookie string is returned.
+     *
      * @param { string } key
      * @param { Function } callback
      * @param { object } attributes
@@ -154,7 +161,13 @@ export class Cookie {
         const cookie: string | null = this.get(key);
 
         if (cookie === null) {
-            return this.set(key, callback(), attributes);
+            const value: any = callback();
+
+            if (value instanceof Promise) {
+                return value.then((value: any): string => this.set(key, value, attributes));
+            }
+
+            return this.set(key, value, attributes);
         }
 
         return cookie;

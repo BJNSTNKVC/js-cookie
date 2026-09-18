@@ -66,6 +66,12 @@ This allows you to lazily load default values from other sources:
 Cookie.get('key', () => 'default');
 ```
 
+The closure may also be asynchronous. In that case, if the key is not found, the Promise returned by the closure is returned, so the result should be awaited:
+
+```javascript
+const value = await Cookie.get('key', async () => await fetchDefault());
+```
+
 ### remember
 
 Retrieve the value associated with the given key, or execute the given callback and store the result in the Cookie object.
@@ -73,13 +79,19 @@ Retrieve the value associated with the given key, or execute the given callback 
 #### Parameters
 
 - **key** - String containing the name of the key.
-- **fallback** - Function you want to execute.
+- **callback** - Function you want to execute.
 - **[attributes](#cookie-attributes)** *(optional)* - Cookie configuration options.
 
 #### Example
 
 ```javascript
 Cookie.remember('key', () => 'default');
+```
+
+The callback may also be asynchronous. In that case, if the key is not found, the value is stored once the callback resolves and a Promise resolving with the written cookie string is returned. If the key exists, its value is returned right away without executing the callback, so awaiting the result covers both cases:
+
+```javascript
+await Cookie.remember('key', async () => await fetchDefault());
 ```
 
 ### all
