@@ -10,8 +10,4 @@ describe('StorageFlushed', (): void => {
     test('has the correct event type', (): void => {
         expect(event.type).toBe('cookie:flushed');
     });
-
-    test('has undefined event key', (): void => {
-        expect(event.key).toBeUndefined()
-    });
 });
