@@ -34,10 +34,13 @@ afterEach((): void => {
     Cookie.restore();
 
     events.clear();
+
+    jest.useRealTimers();
 });
 
 describe('Cookie.ttl', (): void => {
     test('sets default validity period', (): void => {
+        jest.useFakeTimers({ now: Date.now() });
         Cookie.ttl(60);
 
         const key: string = '$key';
@@ -49,7 +52,7 @@ describe('Cookie.ttl', (): void => {
 
         expect(Cookie.get(key)).toBe(value);
         expect(cookie).toMatch(/expires=([^;]+)/);
-        expect(date).toBeCloseTo(current + 60 * 1000, -2);
+        expect(date).toBe(current + 60 * 1000);
     });
 
     test('sets default validity period to null', (): void => {
@@ -132,6 +135,7 @@ describe('Cookie.set', (): void => {
         const key: string = '$key';
         const value: string = '$value';
         const ttl: number = 60;
+        jest.useFakeTimers({ now: Date.now() });
         const current: number = Math.floor(Date.now() / 1000) * 1000;
         const cookie: string = Cookie.set(key, value, { ttl });
         const expires: RegExpMatchArray = cookie.match(/expires=([^;]+)/) as RegExpMatchArray;
@@ -139,7 +143,7 @@ describe('Cookie.set', (): void => {
 
         expect(Cookie.get(key)).toBe(value);
         expect(cookie).toMatch(/expires=([^;]+)/);
-        expect(date).toBeCloseTo(current + ttl * 1000, -2);
+        expect(date).toBe(current + ttl * 1000);
     });
 
     test('sets the key with expires Date attribute to the Cookie object', (): void => {
@@ -449,6 +453,24 @@ describe('Cookie.get', (): void => {
     test('returns fallback function result if key does not exist in the Cookie object', (): void => {
         expect(Cookie.get('$key', (): string => 'fallback')).toEqual('fallback');
     });
+
+    test('returns fallback async function result if key does not exist in the Cookie object', async (): Promise<void> => {
+        const result: any = Cookie.get('$key', async (): Promise<string> => 'fallback');
+
+        expect(result).toBeInstanceOf(Promise);
+        await expect(result).resolves.toEqual('fallback');
+    });
+
+    test('does not execute fallback async function if key exists in the Cookie object', (): void => {
+        const key: string = '$key';
+        const value: string = '$value';
+        const fallback: jest.Mock = jest.fn(async (): Promise<string> => 'fallback');
+
+        Cookie.set(key, value);
+
+        expect(Cookie.get(key, fallback)).toBe(value);
+        expect(fallback).not.toHaveBeenCalled();
+    });
 });
 
 describe('Cookie.remember', (): void => {
@@ -489,6 +511,63 @@ describe('Cookie.remember', (): void => {
         expect(cookie).toMatch(/expires=[^;]+/);
         expect(cookie).toContain('path=/test');
         expect(cookie).toContain('Secure');
+    });
+
+    test('executes async callback and stores cookie once it resolves when key does not exist', async (): Promise<void> => {
+        const key: string = '$key';
+        const value: string = '$value';
+        const callback: jest.Mock = jest.fn(async (): Promise<string> => value);
+
+        const cookie: any = Cookie.remember(key, callback);
+
+        expect(cookie).toBeInstanceOf(Promise);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(Cookie.get(key)).toBeNull();
+
+        await expect(cookie).resolves.toBe(`${key}=${value}`);
+        expect(Cookie.get(key)).toBe(value);
+    });
+
+    test('stores async callback result with attributes when key does not exist', async (): Promise<void> => {
+        const key: string = '$key';
+        const value: object = { name: 'John' };
+        const attributes: CookieAttributes = { ttl: 60, path: '/test', secure: true };
+
+        const cookie: string = await Cookie.remember(key, async (): Promise<object> => value, attributes);
+
+        expect(cookie).toMatch(/expires=[^;]+/);
+        expect(cookie).toContain('path=/test');
+        expect(cookie).toContain('Secure');
+    });
+
+    test('returns existing value without executing async callback when key exists', (): void => {
+        const key: string = '$key';
+        const value: string = '$value';
+        const callback: jest.Mock = jest.fn(async (): Promise<string> => 'new value');
+
+        Cookie.set(key, value);
+
+        expect(Cookie.remember(key, callback)).toBe(value);
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    test('rejects without storing cookie when async callback rejects', async (): Promise<void> => {
+        const key: string = '$key';
+        const error: Error = new Error('Failed.');
+
+        await expect(Cookie.remember(key, async (): Promise<never> => {
+            throw error;
+        })).rejects.toBe(error);
+
+        expect(Cookie.get(key)).toBeNull();
+    });
+
+    test('rejects when async callback result cannot be written', async (): Promise<void> => {
+        const key: string = '$key';
+
+        await expect(Cookie.remember(key, async (): Promise<string> => 'x'.repeat(4 * 1024))).rejects.toThrow('The "value" must be less than 4KB.');
+
+        expect(Cookie.get(key)).toBeNull();
     });
 });
 
